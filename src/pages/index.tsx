@@ -1,11 +1,7 @@
-import Image from "next/image";
 import { Inter } from "next/font/google";
-import { BeakerIcon } from "@heroicons/react/24/solid";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-// import {supabase} from '../../api'
-import { SupabaseClient, createClient } from "@supabase/supabase-js";
-import { supabase } from "../../api";
+import { useQuery } from "react-query";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,19 +13,20 @@ export type Books = {
   genre: string;
 };
 
-export default function Home() {
-  const [books, setBooks] = useState<Books[]>([] as Books[]);
-  const [updateBook, setUpdateBook] = useState<Books>({} as Books);
-  let mydata: any = null;
+const fetchBooks= async (): Promise<Books[]> => {
+  const response = await fetch('api/books')
+  const data = await response.json()
+  return data;
+  // setBooks(data);
+}
 
-  const fetchData = async () => {
-    const response = await fetch('api/books')
-    const data = await response.json()
-    setBooks(data);
-  }
-  useEffect(() => {
-    fetchData();
-  }, []);
+export default function Home() {
+  // const [books, setBooks] = useState<Books[]>([] as Books[]);
+  const [updateBook, setUpdateBook] = useState<Books>({} as Books);
+
+  const {isLoading, data: booksList} = useQuery('books', fetchBooks, {
+    select: (data) => data,
+  })
 
   return (
     <div className={`min-h-screen ${inter.className}`}>
@@ -64,7 +61,7 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {books.map((book) => (
+            {booksList?.map((book) => (
               <tr key={book.id}>
                 <td className="pr-5 pl-5 pt-3 pb-3 border-2 border-gray-300">
                   {book.id === updateBook.id ? (
