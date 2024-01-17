@@ -1,5 +1,5 @@
 import { Inter } from "next/font/google";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useQuery } from "react-query";
 
@@ -21,12 +21,18 @@ const fetchBooks= async (): Promise<Books[]> => {
 }
 
 export default function Home() {
-  // const [books, setBooks] = useState<Books[]>([] as Books[]);
+  const [books, setBooks] = useState<Books[]>([]);
   const [updateBook, setUpdateBook] = useState<Books>({} as Books);
 
   const {isLoading, data: booksList} = useQuery('books', fetchBooks, {
     select: (data) => data,
   })
+
+  useEffect(() => {
+    if (booksList) {
+      setBooks(booksList);
+    }
+  }, [booksList]);
 
   return (
     <div className={`min-h-screen ${inter.className}`}>
@@ -61,7 +67,7 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {booksList?.map((book) => (
+            {books?.map((book) => (
               <tr key={book.id}>
                 <td className="pr-5 pl-5 pt-3 pb-3 border-2 border-gray-300">
                   {book.id === updateBook.id ? (
