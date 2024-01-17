@@ -1,11 +1,11 @@
 import { Inter } from "next/font/google";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
-import { useQuery } from "react-query";
+import { useMutation, useQuery } from "react-query";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export type Books = {
+export type Book = {
   id: number;
   title: string;
   author: string;
@@ -13,26 +13,82 @@ export type Books = {
   genre: string;
 };
 
-const fetchBooks= async (): Promise<Books[]> => {
+// const initialBookState: Book = {
+//   id: 0,
+//   title: '',
+//   author: '',
+//   publishedDate: new Date(),
+//   genre: '',
+// };
+
+
+const fetchBooks= async (): Promise<Book[]> => {
   const response = await fetch('api/books')
   const data = await response.json()
   return data;
   // setBooks(data);
 }
 
-export default function Home() {
-  const [books, setBooks] = useState<Books[]>([]);
-  const [updateBook, setUpdateBook] = useState<Books>({} as Books);
+const editBook = async (updatedData: Book) => {
+  const response = await fetch('/api/books', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updatedData),
+  });
 
-  const {isLoading, data: booksList} = useQuery('books', fetchBooks, {
+  if (!response.ok) {
+    throw new Error('Failed to update data');
+  }
+
+  // Return the updated data or whatever is needed
+  return response.json();
+}
+
+
+export default function Home() {
+  const [books, setBooks] = useState<Book[]>([]);
+  // const [updateBook, setUpdateBook] = useState<Books>({} as Books);
+  const [updateBook, setUpdateBook] = useState<Book>({} as Book);
+
+
+  const {isLoading, data: booksList, refetch} = useQuery('books', fetchBooks, {
     select: (data) => data,
   })
+
+  const updateMutation = useMutation(editBook, {
+    onSuccess: () => {
+      // On successful update, refetch the data to get the latest changes
+      refetch();
+      setUpdateBook({} as Book)
+    },
+  });
 
   useEffect(() => {
     if (booksList) {
       setBooks(booksList);
     }
   }, [booksList]);
+
+
+  const handleUpdate = async () => {
+    try {
+      // Trigger the mutation
+      await updateMutation.mutateAsync(updateBook);
+    } catch (error) {
+      console.error('Error updating data:', error);
+    }
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log('event', e.target.name, e.target.value);
+    setUpdateBook((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.type === 'date' ? new Date(e.target.value) : e.target.value,
+    }));
+  };
+
 
   return (
     <div className={`min-h-screen ${inter.className}`}>
@@ -74,7 +130,9 @@ export default function Home() {
                     <input
                       type="text"
                       className="pt-2 pb-2 pl-1 pr-1 rounded-md"
-                      value={book.title}
+                      value={updateBook.id ? updateBook.title : book.title}
+                      name="title"
+                      onChange={handleChange}
                     />
                   ) : (
                     <>{book.title}</>
@@ -85,7 +143,9 @@ export default function Home() {
                     <input
                       type="text"
                       className="pt-2 pb-2 pl-1 pr-1 rounded-md"
-                      value={book.author}
+                      value={updateBook.id ? updateBook.author : book.author}
+                      name="author"
+                      onChange={handleChange}
                     />
                   ) : (
                     <>{book.author}</>
@@ -96,6 +156,8 @@ export default function Home() {
                     <input
                       type="date"
                       className="pt-2 pb-2 pl-1 pr-1 rounded-md"
+                      name="publishedDate"
+                      onChange={handleChange}
                     />
                   ) : (
                     <>
@@ -115,7 +177,9 @@ export default function Home() {
                     <input
                       type="text"
                       className="pt-2 pb-2 pl-1 pr-1 rounded-md"
-                      value={book.genre}
+                      value={updateBook.id ? updateBook.genre : book.genre}
+                      name="genre"
+                      onChange={handleChange}
                     />
                   ) : (
                     <>{book.genre}</>
@@ -130,7 +194,7 @@ export default function Home() {
                         data-dropdown-toggle="dropdown"
                         type="button"
                         className="mr-2"
-                        onClick={() => setUpdateBook({} as Books)}
+                        onClick={handleUpdate}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -151,7 +215,7 @@ export default function Home() {
                         id="dropdownDefaultButton"
                         data-dropdown-toggle="dropdown"
                         type="button"
-                        onClick={() => setUpdateBook({} as Books)}
+                        onClick={() => setUpdateBook({} as Book)}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
