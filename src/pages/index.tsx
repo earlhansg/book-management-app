@@ -1,3 +1,4 @@
+import useBookData from "@/hooks/useBookData";
 import { Inter } from "next/font/google";
 import { ChangeEvent, useEffect, useState } from "react";
 
@@ -53,9 +54,27 @@ export default function Home() {
   const [updateBook, setUpdateBook] = useState<Book>({} as Book);
 
 
-  const {isLoading, data: booksList, refetch} = useQuery('books', fetchBooks, {
-    select: (data) => data,
-  })
+  // const {isLoading, data: booksList, refetch} = useQuery('books', fetchBooks, {
+  //   select: (data) => data,
+  // })
+
+  const onSuccess = (data: Book[]) => {
+    console.log({ data })
+  }
+
+  const onError = (error: Error) => {
+    console.log({ error })
+  }
+
+  const { isLoading, data: booksList, isError, error, refetch } = useBookData(
+    onSuccess,
+    onError
+  )
+
+
+  // const {isLoading, data: booksList, refetch} = useQuery('books', fetchBooks, {
+  //   select: (data) => data,
+  // })
 
   const updateMutation = useMutation(editBook, {
     onSuccess: () => {
