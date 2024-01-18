@@ -2,7 +2,7 @@ import { useUpdateBookData, useBookData } from "@/hooks/useBookData";
 import { Inter } from "next/font/google";
 import { ChangeEvent, useEffect, useState } from "react";
 
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,6 +12,7 @@ export type Book = {
   author: string;
   publishedDate: Date;
   genre: string;
+  created_at?: any
 };
 
 
@@ -50,11 +51,12 @@ export default function Home() {
   const handleUpdate = () => {
     updateBookData(updateBook, {
       onSuccess: async (response: any) => {
-        console.log("success updated", response)
-        setUpdateBook({} as Book)
-      }
+        console.log("success updated", response);
+        setUpdateBook({} as Book);
+      },
     });
   };
+  
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     console.log('event', e.target.name, e.target.value);

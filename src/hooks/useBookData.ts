@@ -1,5 +1,5 @@
 import { Book } from '@/pages';
-import { useMutation, useQuery } from 'react-query';
+import {  MutationFunction, useMutation, useQuery, useQueryClient  } from 'react-query';
 
 const fetchBooks = async (): Promise<Book[]> => {
   const response = await fetch('api/books');
@@ -23,11 +23,10 @@ const updateBook = async (updatedData: Book) => {
 }
 
 
-
 export const useBookData = (onSuccess?: (data: Book[]) => void, onError?: (error: Error) => void) => {
-  const queryKey = 'books';
+  // const queryKey = 'books';
   
-  return useQuery<Book[], Error>('super-heroes', fetchBooks, {
+  return useQuery<Book[], Error>('books', fetchBooks, {
     onSuccess: (data) => {
       if (onSuccess) onSuccess(data);
     },
@@ -39,5 +38,32 @@ export const useBookData = (onSuccess?: (data: Book[]) => void, onError?: (error
 }
 
 export const useUpdateBookData = () => {
-  return useMutation(updateBook)
-}
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    updateBook as MutationFunction<Book, Book>,
+    {
+      onMutate: async (updatedBook: Book) => {
+        const previousBookData = queryClient.getQueryData<Book[]>('books');
+
+        // Cancel the 'books' query
+        await queryClient.cancelQueries('books');
+
+        // Update the 'books' query data optimistically
+        queryClient.setQueryData<Book[] | undefined>('books', (oldQueryData) => {
+          if (!oldQueryData) return oldQueryData;
+
+          const updatedData = oldQueryData.map((oldBook) =>
+            oldBook.id === updatedBook.id ? { ...oldBook, ...updatedBook } : oldBook
+          );
+
+          return updatedData;
+        });
+
+        return { previousBookData };
+      },
+    }
+  );
+};
+
+
