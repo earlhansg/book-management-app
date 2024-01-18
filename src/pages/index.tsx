@@ -1,4 +1,4 @@
-import useBookData from "@/hooks/useBookData";
+import { useUpdateBookData, useBookData } from "@/hooks/useBookData";
 import { Inter } from "next/font/google";
 import { ChangeEvent, useEffect, useState } from "react";
 
@@ -14,39 +14,6 @@ export type Book = {
   genre: string;
 };
 
-// const initialBookState: Book = {
-//   id: 0,
-//   title: '',
-//   author: '',
-//   publishedDate: new Date(),
-//   genre: '',
-// };
-
-
-const fetchBooks= async (): Promise<Book[]> => {
-  const response = await fetch('api/books')
-  const data = await response.json()
-  return data;
-  // setBooks(data);
-}
-
-const editBook = async (updatedData: Book) => {
-  const response = await fetch('/api/books', {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(updatedData),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to update data');
-  }
-
-  // Return the updated data or whatever is needed
-  return response.json();
-}
-
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -59,7 +26,7 @@ export default function Home() {
   // })
 
   const onSuccess = (data: Book[]) => {
-    console.log({ data })
+    console.log('fectching success', { data })
   }
 
   const onError = (error: Error) => {
@@ -71,18 +38,7 @@ export default function Home() {
     onError
   )
 
-
-  // const {isLoading, data: booksList, refetch} = useQuery('books', fetchBooks, {
-  //   select: (data) => data,
-  // })
-
-  const updateMutation = useMutation(editBook, {
-    onSuccess: () => {
-      // On successful update, refetch the data to get the latest changes
-      refetch();
-      setUpdateBook({} as Book)
-    },
-  });
+  const {mutate: updateBookData} = useUpdateBookData()
 
   useEffect(() => {
     if (booksList) {
@@ -91,13 +47,13 @@ export default function Home() {
   }, [booksList]);
 
 
-  const handleUpdate = async () => {
-    try {
-      // Trigger the mutation
-      await updateMutation.mutateAsync(updateBook);
-    } catch (error) {
-      console.error('Error updating data:', error);
-    }
+  const handleUpdate = () => {
+    updateBookData(updateBook, {
+      onSuccess: async (response: any) => {
+        console.log("success updated", response)
+        setUpdateBook({} as Book)
+      }
+    });
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {

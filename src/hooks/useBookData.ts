@@ -1,6 +1,5 @@
 import { Book } from '@/pages';
-import { useQuery, UseQueryOptions } from 'react-query';
-import { supabase } from '../../api';
+import { useMutation, useQuery } from 'react-query';
 
 const fetchBooks = async (): Promise<Book[]> => {
   const response = await fetch('api/books');
@@ -8,7 +7,24 @@ const fetchBooks = async (): Promise<Book[]> => {
   return data;
 }
 
-const useBookData = (onSuccess?: (data: Book[]) => void, onError?: (error: Error) => void) => {
+const updateBook = async (updatedData: Book) => {
+  const response = await fetch('/api/books', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updatedData),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update data');
+  }
+  return response.json()
+}
+
+
+
+export const useBookData = (onSuccess?: (data: Book[]) => void, onError?: (error: Error) => void) => {
   const queryKey = 'books';
   
   return useQuery<Book[], Error>('super-heroes', fetchBooks, {
@@ -22,4 +38,6 @@ const useBookData = (onSuccess?: (data: Book[]) => void, onError?: (error: Error
   });
 }
 
-export default useBookData;
+export const useUpdateBookData = () => {
+  return useMutation(updateBook)
+}
