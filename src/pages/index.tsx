@@ -2,8 +2,6 @@ import { useUpdateBookData, useBookData } from "@/hooks/useBookData";
 import { Inter } from "next/font/google";
 import { ChangeEvent, useEffect, useState } from "react";
 
-import { useMutation, useQuery, useQueryClient } from "react-query";
-
 const inter = Inter({ subsets: ["latin"] });
 
 export type Book = {
@@ -18,13 +16,7 @@ export type Book = {
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
-  // const [updateBook, setUpdateBook] = useState<Books>({} as Books);
   const [updateBook, setUpdateBook] = useState<Book>({} as Book);
-
-
-  // const {isLoading, data: booksList, refetch} = useQuery('books', fetchBooks, {
-  //   select: (data) => data,
-  // })
 
   const onSuccess = (data: Book[]) => {
     console.log('fectching success', { data })
